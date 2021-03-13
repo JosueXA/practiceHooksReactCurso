@@ -1,25 +1,67 @@
-import React, { useReducer } from 'react';
+import React, { useEffect, useReducer } from 'react';
+import { useForm } from '../../hooks/useForm';
 import { todoReducer } from '../07-tarea-memo/todoReducer';
 
 import './styles.css';
 
-const initialState = [{
-  id: new Date().getTime(),
-  desc: 'Aprender React',
-  done: false
-}]
+const init = () => {
+
+  return JSON.parse(localStorage.getItem('todos')) || [];
+  /*
+  return [{
+    id: new Date().getTime(),
+    desc: 'Aprender React',
+    done: false
+  }];
+  */
+
+}
 
 export const TodoApp = () => {
 
-  const [ todos ] = useReducer(todoReducer, initialState);
+  const [ todos, dispatch ] = useReducer(todoReducer, [], init);
 
-  console.log( todos );
+  const [ { description }, handleInputChange, reset ] = useForm({
+    description: '',
+  });
+
+  useEffect(() => {
+    localStorage.setItem('todos', JSON.stringify( todos ) )
+  }, [todos]);
+
+  const handleDelete = ( todoId ) => {
+
+    const action = {
+      type: 'delete',
+      payload: todoId
+    }
+    //dispatch
+    dispatch( action );
+
+  }
 
   const handleSubmit = (e) => {
 
     e.preventDefault();
 
-    console.log('Nueva tarea');
+    if ( description.trim().length <= 1 ) {
+      return;
+    }
+
+    const newTodo = {
+      id: new Date().getTime(),
+      desc: description,
+      done: false
+    }
+
+    const action = {
+      type: 'add',
+      payload: newTodo
+    }
+
+    dispatch( action );
+
+    reset();
 
   }
 
@@ -42,7 +84,10 @@ export const TodoApp = () => {
                     className="list-group-item"
                   >
                     <p className="text-center"> { i + 1 }. {todo.desc} </p>
-                    <button className="btn btn-danger">
+                    <button 
+                      className="btn btn-danger"
+                      onClick={ () => handleDelete( todo.id ) }
+                    >
                       Borrar
                     </button>
                   </li>
@@ -66,6 +111,8 @@ export const TodoApp = () => {
               className="form-control"
               placeholder="Aprender..."
               autoComplete="off"
+              value={ description }
+              onChange={ handleInputChange }
             />
 
             <button
